@@ -1,0 +1,7 @@
+grafana-storage/
+prometheus-storage/
+loki-storage/
+logs/
+ssl-certs/
+node_modules/
+.env

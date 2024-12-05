@@ -1,0 +1,11 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'nodejs-app'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['app:3500']
+        basic_auth:
+          username: metrics_user
+          password: C7L5aGJyPoPQObF1mxl9
