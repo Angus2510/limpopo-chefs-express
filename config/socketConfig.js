@@ -1,9 +1,9 @@
-const webpush = require('web-push');
-const Subscription = require('../models/Subscription');
-const allowedOrigins = require('./allowedOrigins');
+const webpush = require("web-push");
+const Subscription = require("../models/Subscription");
+const allowedOrigins = require("./allowedOrigins");
 
 webpush.setVapidDetails(
-  'mailto:dev@swartdigital.co.za',
+  "mailto:anguscarey1@gmail.com",
   process.env.VAPID_PUBLIC_KEY,
   process.env.VAPID_PRIVATE_KEY
 );
@@ -11,33 +11,33 @@ webpush.setVapidDetails(
 let io;
 
 const initializeSocket = (server) => {
-  io = require('socket.io')(server, {
+  io = require("socket.io")(server, {
     cors: {
       origin: allowedOrigins,
       methods: ["GET", "POST"],
       credentials: true,
     },
     pingInterval: 60000,
-    pingTimeout: 120000, 
+    pingTimeout: 120000,
   });
 
-  io.on('connection', (socket) => {
-    console.log('User connected:', socket.id);
+  io.on("connection", (socket) => {
+    console.log("User connected:", socket.id);
 
-    socket.on('join', (userId) => {
+    socket.on("join", (userId) => {
       console.log(`User with ID ${userId} joined`);
       socket.join(userId);
     });
 
-    socket.on('disconnect', () => {
-      console.log('User disconnected:', socket.id);
+    socket.on("disconnect", () => {
+      console.log("User disconnected:", socket.id);
     });
   });
 };
 
 const emitNotification = async (userId, notification) => {
   console.log(`Emitting notification to userId: ${userId}`);
-  io.to(userId).emit('notification', notification);
+  io.to(userId).emit("notification", notification);
 
   try {
     console.log(`Fetching subscription for userId: ${userId}`);
@@ -48,11 +48,13 @@ const emitNotification = async (userId, notification) => {
         message: notification.message,
       });
 
-      console.log(`Sending web push notification to subscription: ${JSON.stringify(sub)}`);
+      console.log(
+        `Sending web push notification to subscription: ${JSON.stringify(sub)}`
+      );
       await webpush.sendNotification(sub.subscription, payload);
     }
   } catch (error) {
-    console.error('Error sending push notification:', error);
+    console.error("Error sending push notification:", error);
   }
 };
 

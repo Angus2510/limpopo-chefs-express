@@ -1,26 +1,30 @@
-const asyncHandler = require('express-async-handler');
-const bcrypt = require('bcrypt');
-const Staff = require('../models/Staff');
-const Guardian = require('../models/Guardian');
-const Student = require('../models/Student');
-const transporter = require('../config/nodeMailerConn');
-const crypto = require('crypto');
+const asyncHandler = require("express-async-handler");
+const bcrypt = require("bcrypt");
+const Staff = require("../models/Staff");
+const Guardian = require("../models/Guardian");
+const Student = require("../models/Student");
+const transporter = require("../config/nodeMailerConn");
+const crypto = require("crypto");
 
 // Helper function to find user by identifier for students and staff
 async function findUser(identifier) {
-  const staffUser = await Staff.findOne({ $or: [{ email: identifier }, { username: identifier }] }).exec();
+  const staffUser = await Staff.findOne({
+    $or: [{ email: identifier }, { username: identifier }],
+  }).exec();
   if (staffUser) {
-    return { user: staffUser, userType: 'staff' };
+    return { user: staffUser, userType: "staff" };
   }
 
   const guardianUser = await Guardian.findOne({ email: identifier }).exec();
   if (guardianUser) {
-    return { user: guardianUser, userType: 'guardian' };
+    return { user: guardianUser, userType: "guardian" };
   }
 
-  const studentUser = await Student.findOne({ admissionNumber: identifier }).exec();
+  const studentUser = await Student.findOne({
+    admissionNumber: identifier,
+  }).exec();
   if (studentUser) {
-    return { user: studentUser, userType: 'student' };
+    return { user: studentUser, userType: "student" };
   }
 
   return null;
@@ -28,9 +32,19 @@ async function findUser(identifier) {
 
 // Helper function to find user by reset token
 async function findUserByResetToken(token) {
-  const user = await Staff.findOne({ resetToken: token, resetTokenExpiry: { $gte: Date.now() } }) ||
-               await Guardian.findOne({ resetToken: token, resetTokenExpiry: { $gte: Date.now() } }) ||
-               await Student.findOne({ resetToken: token, resetTokenExpiry: { $gte: Date.now() } });
+  const user =
+    (await Staff.findOne({
+      resetToken: token,
+      resetTokenExpiry: { $gte: Date.now() },
+    })) ||
+    (await Guardian.findOne({
+      resetToken: token,
+      resetTokenExpiry: { $gte: Date.now() },
+    })) ||
+    (await Student.findOne({
+      resetToken: token,
+      resetTokenExpiry: { $gte: Date.now() },
+    }));
 
   if (user) {
     return { user };
@@ -44,18 +58,18 @@ const resetPassword = asyncHandler(async (req, res) => {
   const { identifier } = req.body;
 
   if (!identifier) {
-    return res.status(400).json({ message: 'Identifier is required' });
+    return res.status(400).json({ message: "Identifier is required" });
   }
 
   const userResult = await findUser(identifier);
   if (!userResult) {
-    return res.status(404).json({ message: 'User not found' });
+    return res.status(404).json({ message: "User not found" });
   }
 
   const { user } = userResult;
 
   // Generate reset token
-  const resetToken = crypto.randomBytes(32).toString('hex');
+  const resetToken = crypto.randomBytes(32).toString("hex");
   const resetTokenExpiry = Date.now() + 3600000; // 1 hour
 
   // Save token to the user record
@@ -109,26 +123,31 @@ const resetPassword = asyncHandler(async (req, res) => {
 
   // Send email
   const mailOptions = {
-    to: user.email,  // Updated to use the user's email
+    to: user.email, // Updated to use the user's email
     from: process.env.EMAIL_USER,
-    subject: 'Password Reset',
-    html: htmlTemplate,  // Use the HTML template
+    subject: "Password Reset",
+    html: htmlTemplate, // Use the HTML template
   };
 
-  await transporter.sendMail(mailOptions);
-
-  res.json({ message: 'Password reset request received' });
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log("Password reset email sent successfully"); // Debugging line
+    res.json({ message: "Password reset request received" });
+  } catch (error) {
+    console.error("Error sending email:", error); // Debugging line
+    res.status(500).json({ message: "Error sending email" });
+  }
 });
 
 const staffResetPassword = asyncHandler(async (req, res) => {
-  res.json({ message: 'Temporary password generated' });
+  res.json({ message: "Temporary password generated" });
 });
 
 const resetPasswordConfirm = asyncHandler(async (req, res) => {
   const { token, password } = req.body;
 
   if (!token || !password) {
-    return res.status(400).json({ message: 'Token and password are required' });
+    return res.status(400).json({ message: "Token and password are required" });
   }
 
   console.log("Received token:", token); // Debugging line
@@ -138,7 +157,7 @@ const resetPasswordConfirm = asyncHandler(async (req, res) => {
   const userResult = await findUserByResetToken(token);
   if (!userResult) {
     console.log("Invalid or expired token"); // Debugging line
-    return res.status(400).json({ message: 'Invalid or expired token' });
+    return res.status(400).json({ message: "Invalid or expired token" });
   }
 
   const { user } = userResult;
@@ -158,10 +177,10 @@ const resetPasswordConfirm = asyncHandler(async (req, res) => {
   try {
     await user.save();
     console.log("User password updated successfully"); // Debugging line
-    res.json({ message: 'Password reset successful' });
+    res.json({ message: "Password reset successful" });
   } catch (error) {
     console.error("Error saving user:", error); // Debugging line
-    res.status(500).json({ message: 'Error saving user' });
+    res.status(500).json({ message: "Error saving user" });
   }
 });
 

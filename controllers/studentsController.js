@@ -83,7 +83,7 @@ const getStudentById = asyncHandler(async (req, res) => {
     // Use local proxy URL for the avatar if it exists
     if (student.profile && student.profile.avatar) {
       const avatarKey = student.profile.avatar.split('.com/')[1];
-      student.profile.avatar = `https://swartstudio.co.za/api/files/getFile?key=${avatarKey}`;
+      student.profile.avatar = "";
     }
 
     // Find accommodations where the student is an occupant
