@@ -30,6 +30,8 @@ const sendEmailNotification = (email, title, message) => {
       .replace(/{{title}}/g, title)
       .replace("{{message}}", message);
 
+    console.log("Transporter:", transporter);
+
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: email,
